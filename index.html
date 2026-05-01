@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Groundwater Monitoring using DWLR Data</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">💧</div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: #fff; margin-left: 4px; letter-spacing: 0.5px;">HydraX</h1>
+            </div>
+            
+            <div class="sidebar-scrollable">
+                <div class="sidebar-section">
+                    <p class="sidebar-label">Navigation</p>
+                    <ul class="nav-links">
+                        <li><button class="nav-btn active" data-tab="home">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            Home
+                        </button></li>
+                        <li><button class="nav-btn" data-tab="analysis">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                            Detailed Analysis
+                        </button></li>
+                        <li><button class="nav-btn" data-tab="rainfall">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"></path><path d="M16 14v6"></path><path d="M8 14v6"></path><path d="M12 16v6"></path></svg>
+                            Rainfall Correlation
+                        </button></li>
+                        <li><button class="nav-btn" data-tab="map">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+                            Map View
+                        </button></li>
+                        <li><button class="nav-btn" data-tab="crop">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            Crop Recommendation
+                        </button></li>
+                        <li><button class="nav-btn" data-tab="advanced">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+                            Advanced Analytics
+                        </button></li>
+                        <li><button class="nav-btn" data-tab="alerts">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Alerts & Insights
+                        </button></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <p class="sidebar-label">Location Selector</p>
+                    
+                    <div class="location-mode">
+                        <label class="radio-label">
+                            <input type="radio" name="locMode" value="pincode" checked> By Pincode
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="locMode" value="manual"> Manual
+                        </label>
+                    </div>
+
+                    <!-- Pincode Search -->
+                    <div id="pincode-panel" class="loc-panel">
+                        <div class="search-box">
+                            <input type="text" id="pincodeInput" placeholder="Enter Pincode...">
+                            <button id="pincodeSearchBtn" title="Search">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </button>
+                        </div>
+                        <div id="pincode-loading" class="small-loading hidden">Searching...</div>
+                        <div id="pincode-error" class="small-error hidden">Not found.</div>
+                    </div>
+
+                    <!-- Manual Selection -->
+                    <div id="manual-panel" class="loc-panel hidden">
+                        <div class="form-group small">
+                            <label>State</label>
+                            <select id="stateSelect" class="custom-select-small">
+                                <option value="" disabled selected>Loading states...</option>
+                            </select>
+                        </div>
+                        <div class="form-group small">
+                            <label>District</label>
+                            <select id="districtSelect" class="custom-select-small" disabled>
+                                <option value="" disabled selected>Select State First</option>
+                            </select>
+                        </div>
+                        <div class="form-group small">
+                            <label>Block</label>
+                            <select id="blockSelect" class="custom-select-small" disabled>
+                                <option value="" disabled selected>Select District First</option>
+                            </select>
+                        </div>
+                        <div class="form-group small">
+                            <label>Village</label>
+                            <select id="villageSelect" class="custom-select-small" disabled>
+                                <option value="" disabled selected>Select Block First</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header" style="justify-content: center; position: relative;">
+                <!-- TOP CENTER TITLE -->
+                <div style="text-align: center;">
+                    <h1 style="font-size: 1.4rem; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px;">Real-Time Groundwater Monitoring using DWLR Data</h1>
+                </div>
+                <div class="header-actions" style="position: absolute; right: 32px;">
+                    <div class="status-indicator">
+                        <span class="pulse"></span> Live API Active
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab Content -->
+            <div class="tab-content-wrapper" style="padding-top: 16px;">
+                
+                <!-- GLOBAL CURRENT REGION DISPLAY -->
+                <div class="global-region-display" style="background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border); padding: 16px 24px; border-radius: var(--radius-lg); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span class="loc-label" style="color: var(--text-muted); font-weight: 500;">Current Region:</span>
+                    <span id="header-location-path" class="loc-path" style="color: #fff; font-size: 1.1rem; font-weight: 600;">All India</span>
+                </div>
+                <div id="home-tab" class="tab-pane active">
+                    <div class="dashboard-header">
+                        <div>
+                            <h2 class="section-title">Overview Dashboard</h2>
+                            <p class="section-desc">Key Performance Indicators for the selected region.</p>
+                        </div>
+                    </div>
+
+                    <div id="home-loading" class="loading-container hidden">
+                        <div class="spinner"></div><p>Fetching KPIs...</p>
+                    </div>
+                    
+                    <div id="home-error" class="error-container hidden">
+                        <p class="error-msg">Failed to load data.</p>
+                    </div>
+
+                    <!-- Primary KPIs -->
+                    <h3 class="subsection-title">Groundwater Metrics</h3>
+                    <div id="home-content" class="dashboard-grid">
+                        <div class="kpi-card blue">
+                            <div class="kpi-data">
+                                <h3>Overall DTWL</h3>
+                                <p class="kpi-value" id="kpi-overall-dtwl">--</p>
+                                <p class="kpi-subtitle">Meters</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card blue">
+                            <div class="kpi-data">
+                                <h3>Current DTWL</h3>
+                                <p class="kpi-value" id="kpi-current-dtwl">--</p>
+                                <p class="kpi-subtitle" id="kpi-current-date">--</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card emerald">
+                            <div class="kpi-data">
+                                <h3>Premonsoon Avg</h3>
+                                <p class="kpi-value" id="kpi-premonsoon">--</p>
+                                <p class="kpi-subtitle">Meters</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card emerald">
+                            <div class="kpi-data">
+                                <h3>Postmonsoon Avg</h3>
+                                <p class="kpi-value" id="kpi-postmonsoon">--</p>
+                                <p class="kpi-subtitle">Meters</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Context -->
+                    <h3 class="subsection-title mt-8">Environmental Context</h3>
+                    <div class="dashboard-grid context-grid">
+                        <div class="kpi-card orange">
+                            <div class="kpi-data">
+                                <h3>Temperature</h3>
+                                <p class="kpi-value" id="kpi-temp">--</p>
+                                <p class="kpi-subtitle">°C (Live)</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card purple">
+                            <div class="kpi-data">
+                                <h3>Humidity</h3>
+                                <p class="kpi-value" id="kpi-humidity">--</p>
+                                <p class="kpi-subtitle">% (Live)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Tab -->
+                <div id="analysis-tab" class="tab-pane">
+                    <h2 class="section-title">Detailed Analysis</h2>
+                    <p class="section-desc">Historical Depth to Water Level trends.</p>
+                    
+                    <div id="analysis-loading" class="loading-container hidden">
+                        <div class="spinner"></div><p>Loading trends...</p>
+                    </div>
+                    <div id="analysis-error" class="error-container hidden">
+                        <p class="error-msg">Failed to load trend data.</p>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-card" style="height: 350px;">
+                            <canvas id="overallChart"></canvas>
+                        </div>
+                        <div class="chart-card" style="height: 350px;">
+                            <canvas id="preChart"></canvas>
+                        </div>
+                        <div class="chart-card" style="height: 350px;">
+                            <canvas id="postChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rainfall Tab -->
+                <div id="rainfall-tab" class="tab-pane">
+                    <h2 class="section-title">Rainfall Correlation</h2>
+                    <p class="section-desc">Comparing rainfall data with groundwater levels.</p>
+
+                    <div id="rainfall-loading" class="loading-container hidden">
+                        <div class="spinner"></div><p>Loading correlation data...</p>
+                    </div>
+                    <div id="rainfall-error" class="error-container hidden">
+                        <p class="error-msg">Failed to load correlation data.</p>
+                    </div>
+
+                    <div class="dashboard-grid mb-6">
+                        <div class="kpi-card blue">
+                            <div class="kpi-data">
+                                <h3>Highest Annual Rainfall</h3>
+                                <p class="kpi-value" id="rain-high">--</p>
+                                <p class="kpi-subtitle">mm</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card purple">
+                            <div class="kpi-data">
+                                <h3>Lowest Annual Rainfall</h3>
+                                <p class="kpi-value" id="rain-low">--</p>
+                                <p class="kpi-subtitle">mm</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card emerald">
+                            <div class="kpi-data">
+                                <h3>Average Rainfall</h3>
+                                <p class="kpi-value" id="rain-avg">--</p>
+                                <p class="kpi-subtitle">mm/year</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <canvas id="rainfallChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Map Tab -->
+                <div id="map-tab" class="tab-pane">
+                    <h2 class="section-title">Sensor Map View</h2>
+                    <p class="section-desc">Geographical distribution of monitoring points. Colors indicate DTWL severity.</p>
+                    
+                    <div id="map-loading" class="loading-container hidden">
+                        <div class="spinner"></div><p>Loading map points...</p>
+                    </div>
+                    <div class="map-card">
+                        <div id="map" style="height: 600px; width: 100%; border-radius: 12px; z-index: 1;"></div>
+                        <div class="map-legend">
+                            <span class="legend-item"><span class="color-box" style="background: #3b82f6;"></span> Shallow (< 5m)</span>
+                            <span class="legend-item"><span class="color-box" style="background: #eab308;"></span> Medium (5-15m)</span>
+                            <span class="legend-item"><span class="color-box" style="background: #ef4444;"></span> Deep (> 15m)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crop Tab -->
+                <div id="crop-tab" class="tab-pane">
+                    <h2 class="section-title">AI Crop Recommendation System</h2>
+                    <p class="section-desc">Get AI-generated optimal crops based on state, DTWL, rainfall, and temperature.</p>
+                    
+                    <div class="crop-container">
+                        <div class="crop-input-card">
+                            <h3>Parameters</h3>
+                            <div class="form-group">
+                                <label for="cropTempInput">Temperature (°C)</label>
+                                <input type="number" id="cropTempInput" placeholder="e.g. 25" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="cropRainInput">Rainfall (mm)</label>
+                                <input type="number" id="cropRainInput" placeholder="e.g. 800" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="cropDtwlInput">DTWL (m)</label>
+                                <input type="number" step="0.1" id="cropDtwlInput" placeholder="e.g. 5.5" class="custom-input">
+                            </div>
+                            <button id="run-crop-btn" class="primary-btn">Generate Recommendation</button>
+                        </div>
+
+                        <div class="crop-results-card">
+                            <div id="crop-loading" class="loading-container hidden">
+                                <div class="spinner"></div><p>AI is analyzing...</p>
+                            </div>
+                            
+                            <div id="crop-error" class="error-container hidden">
+                                <p class="error-msg">Failed to get recommendations.</p>
+                            </div>
+
+                            <div id="crop-content" class="hidden">
+                                <div class="recommended-crops">
+                                    <h4>AI Recommended Crops</h4>
+                                    <ul id="crop-list-val" class="crop-list" style="margin-bottom: 12px; font-weight: 500; font-size: 1.1rem; color: #fff;"></ul>
+                                    <h4 style="margin-top: 16px;">AI Reasoning</h4>
+                                    <p id="crop-reason-val" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+                                </div>
+                            </div>
+                            
+                            <div id="crop-empty" class="empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <p>Enter parameters to view AI recommendations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Tab -->
+                <div id="advanced-tab" class="tab-pane">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h2 class="section-title">Decision-Support System</h2>
+                            <p class="section-desc">Intelligent analytics, prediction, and reporting.</p>
+                        </div>
+                        <button id="btn-download-report" class="primary-btn" style="width: auto;">Download Report</button>
+                    </div>
+                    
+                    <div class="advanced-dashboard">
+                        <!-- Left Column -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <div class="kpi-card emerald" id="healthCard">
+                                <h3>Groundwater Health Card</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Indicates overall condition of groundwater in this region.</p>
+                                <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+                                    <div><span style="font-size: 2rem; font-weight: bold;" id="health-score">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Health Score</span></div>
+                                    <div style="text-align: right;"><span style="font-size: 1.2rem;" id="health-trend">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Trend</span></div>
+                                </div>
+                                <div id="health-explanation" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;"></div>
+                            </div>
+                            
+                            <div class="kpi-card blue" id="autonomyCard">
+                                <h3>Days of Autonomy</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Estimates how long groundwater can sustain without recharge.</p>
+                                <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+                                    <div><span style="font-size: 2rem; font-weight: bold;" id="autonomy-days">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Days</span></div>
+                                    <div style="text-align: right;"><span style="font-size: 1.2rem; color: var(--accent);" id="autonomy-status">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Status</span></div>
+                                </div>
+                                <div id="autonomy-explanation" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <div class="chart-card" style="height: 330px; padding: 16px;">
+                                <h3 style="margin-bottom: 4px; font-size: 1rem; color: var(--text-muted);">Aquifer Recharge Efficiency</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Explanation: This shows how well groundwater is refilled after rainfall. Higher values mean better recharge.</p>
+                                <div style="height: 230px;"><canvas id="efficiencyChart"></canvas></div>
+                            </div>
+                            <div class="chart-card" style="height: 300px; padding: 16px;">
+                                <h3 style="margin-bottom: 8px; font-size: 1rem; color: var(--text-muted);">DTWL Forecast (5-Year)</h3>
+                                <div style="height: 230px;"><canvas id="forecastChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts & Insights Tab -->
+                <div id="alerts-tab" class="tab-pane">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h2 class="section-title">Smart Alerts & Insights</h2>
+                            <p class="section-desc">Actionable insights and alerts based on current groundwater data.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 24px;">
+                        <div class="kpi-card" style="border-left: 4px solid var(--accent); background: rgba(30, 41, 59, 0.4);">
+                            <h3 style="color: var(--accent); margin-bottom: 12px; font-size: 1.2rem;">Insights Summary</h3>
+                            <p id="insightsText" style="font-size: 1rem; color: var(--text-muted); line-height: 1.6;">Groundwater levels in this region are moderately stable but show a declining trend. Recharge after rainfall is limited, so careful water usage is recommended.</p>
+                        </div>
+
+                        <div>
+                            <h3 style="margin-bottom: 16px; font-size: 1.2rem; color: #f8fafc;">Active Alerts</h3>
+                            <div id="alertsList" style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                                <!-- Alerts will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
