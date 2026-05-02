@@ -15,21 +15,288 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     
-    <!-- Custom CSS -->
+    <!-- Custom CSS (Fallbacks) -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
+            colors: {
+                primary: '#3b82f6',
+                accent: '#14b8a6'
+            }
+          }
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+        @layer components {
+            .nav-btn {
+                @apply flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all duration-300 ease-in-out font-medium hover:translate-x-1;
+            }
+            .nav-btn.active {
+                @apply bg-gradient-to-r from-blue-600/20 to-indigo-600/20 text-blue-400 shadow-inner border border-blue-500/20 translate-x-1;
+            }
+            .tab-pane {
+                @apply hidden opacity-0 transition-all duration-500 ease-in-out translate-y-4;
+            }
+            .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .result-card, .panel-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .header-section {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .main-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 10px 0;
+        }
+
+        .top-section {
+            margin-top: 10px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .location-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .current-region-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            color: #e2e8f0;
+            backdrop-filter: blur(6px);
+            margin-top: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .current-region-pill:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 0 14px rgba(59, 130, 246, 0.25);
+        }
+
+        .region-icon {
+            font-size: 16px;
+        }
+
+        .region-text strong {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .location-header:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        #location-arrow {
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .location-inputs {
+            display: none;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .sidebar-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            text-shadow: 0 0 6px rgba(148, 163, 184, 0.2);
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .filter-bar {
+            margin-top: 6px;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .filter-bar select {
+            padding: 10px;
+            border-radius: 8px;
+            background: #0f172a;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            flex: 1;
+            min-width: 180px;
+            outline: none;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+        }
+
+        #pincodeInput {
+            padding: 10px;
+            border-radius: 8px;
+            background: #0f172a;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 200px;
+            outline: none;
+        }
+
+        .panel-card {
+            border-radius: 16px;
+        }
+
+        .result-card {
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        .result-card.suitable {
+            border-left: 6px solid #10b981;
+        }
+
+        .result-card.moderate {
+            border-left: 6px solid #f59e0b;
+        }
+
+        .result-card.not-recommended {
+            border-left: 6px solid #ef4444;
+        }
+
+        .crop-item {
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .crop-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+            .kpi-card {
+                @apply relative overflow-hidden rounded-2xl p-6 border border-slate-700/50 shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 ease-in-out bg-slate-800/60 backdrop-blur-xl;
+            }
+            .kpi-card.blue { @apply bg-gradient-to-br from-blue-900/40 to-slate-900/80 border-t border-blue-500/40; }
+            .kpi-card.emerald { @apply bg-gradient-to-br from-emerald-900/40 to-slate-900/80 border-t border-emerald-500/40; }
+            .kpi-card.orange { @apply bg-gradient-to-br from-amber-900/40 to-slate-900/80 border-t border-amber-500/40; }
+            .kpi-card.rose { @apply bg-gradient-to-br from-rose-900/40 to-slate-900/80 border-t border-rose-500/40; }
+            .kpi-card.purple { @apply bg-gradient-to-br from-purple-900/40 to-slate-900/80 border-t border-purple-500/40; }
+            
+            .chart-card {
+                @apply rounded-2xl bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 p-6 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300;
+            }
+            .primary-btn {
+                @apply w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
+            }
+            .custom-input, .custom-select-small {
+                @apply w-full bg-slate-900/50 border border-slate-700 text-slate-200 px-4 py-2.5 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-300;
+            }
+            .section-title {
+                @apply text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2;
+            }
+            .section-desc {
+                @apply text-slate-400 text-sm mb-6;
+            }
+            .dashboard-grid {
+                @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+            }
+        }
+    </style>
 </head>
-<body>
-    <div class="app-container">
+<body class="text-slate-100 font-sans selection:bg-blue-500/30">
+    <div class="flex min-h-screen bg-transparent">
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
-            <div class="logo">
-                <div class="logo-icon">💧</div>
-                <h1 style="font-size: 1.5rem; font-weight: 700; color: #fff; margin-left: 4px; letter-spacing: 0.5px;">HydraX</h1>
+            <div class="flex items-center gap-3 p-6 border-b border-slate-800">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                </div>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-tight">HydraX</h1>
             </div>
             
-            <div class="sidebar-scrollable">
-                <div class="sidebar-section">
-                    <p class="sidebar-label">Navigation</p>
+            <div class="flex-1 overflow-y-auto pb-6 custom-scrollbar">
+                <div class="p-4 pt-6">
+                    <p class="sidebar-section-title px-2">NAVIGATION</p>
                     <ul class="nav-links">
                         <li><button class="nav-btn active" data-tab="home">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -48,7 +315,7 @@
                             Map View
                         </button></li>
                         <li><button class="nav-btn" data-tab="crop">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            <span class="w-6 text-left flex items-center justify-center -ml-1 mr-2 opacity-80" style="font-size: 18px;">🌱</span>
                             Crop Recommendation
                         </button></li>
                         <li><button class="nav-btn" data-tab="advanced">
@@ -61,94 +328,77 @@
                         </button></li>
                     </ul>
                 </div>
-
-                <div class="sidebar-section">
-                    <p class="sidebar-label">Location Selector</p>
-                    
-                    <div class="location-mode">
-                        <label class="radio-label">
-                            <input type="radio" name="locMode" value="pincode" checked> By Pincode
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="locMode" value="manual"> Manual
-                        </label>
-                    </div>
-
-                    <!-- Pincode Search -->
-                    <div id="pincode-panel" class="loc-panel">
-                        <div class="search-box">
-                            <input type="text" id="pincodeInput" placeholder="Enter Pincode...">
-                            <button id="pincodeSearchBtn" title="Search">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            </button>
-                        </div>
-                        <div id="pincode-loading" class="small-loading hidden">Searching...</div>
-                        <div id="pincode-error" class="small-error hidden">Not found.</div>
-                    </div>
-
-                    <!-- Manual Selection -->
-                    <div id="manual-panel" class="loc-panel hidden">
-                        <div class="form-group small">
-                            <label>State</label>
-                            <select id="stateSelect" class="custom-select-small">
-                                <option value="" disabled selected>Loading states...</option>
-                            </select>
-                        </div>
-                        <div class="form-group small">
-                            <label>District</label>
-                            <select id="districtSelect" class="custom-select-small" disabled>
-                                <option value="" disabled selected>Select State First</option>
-                            </select>
-                        </div>
-                        <div class="form-group small">
-                            <label>Block</label>
-                            <select id="blockSelect" class="custom-select-small" disabled>
-                                <option value="" disabled selected>Select District First</option>
-                            </select>
-                        </div>
-                        <div class="form-group small">
-                            <label>Village</label>
-                            <select id="villageSelect" class="custom-select-small" disabled>
-                                <option value="" disabled selected>Select Block First</option>
-                            </select>
-                        </div>
-                    </div>
-
-                </div>
             </div>
         </nav>
 
         <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Top Header -->
-            <header class="top-header" style="justify-content: center; position: relative;">
-                <!-- TOP CENTER TITLE -->
-                <div style="text-align: center;">
-                    <h1 style="font-size: 1.4rem; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px;">Real-Time Groundwater Monitoring using DWLR Data</h1>
-                </div>
-                <div class="header-actions" style="position: absolute; right: 32px;">
-                    <div class="status-indicator">
-                        <span class="pulse"></span> Live API Active
-                    </div>
-                </div>
-            </header>
-
-            <!-- Tab Content -->
-            <div class="tab-content-wrapper" style="padding-top: 16px;">
+        <main class="flex-1 ml-72 flex flex-col min-h-screen bg-transparent">
+            
+            <div class="p-8 flex-1 relative z-10 w-full max-w-7xl mx-auto flex flex-col">
                 
-                <!-- GLOBAL CURRENT REGION DISPLAY -->
-                <div class="global-region-display" style="background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border); padding: 16px 24px; border-radius: var(--radius-lg); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    <span class="loc-label" style="color: var(--text-muted); font-weight: 500;">Current Region:</span>
-                    <span id="header-location-path" class="loc-path" style="color: #fff; font-size: 1.1rem; font-weight: 600;">All India</span>
-                </div>
-                <div id="home-tab" class="tab-pane active">
-                    <div class="dashboard-header">
-                        <div>
-                            <h2 class="section-title">Overview Dashboard</h2>
-                            <p class="section-desc">Key Performance Indicators for the selected region.</p>
+                <!-- NEW HEADER SECTION -->
+                <div class="header-section relative">
+                    <h1 class="main-title">Real-Time Groundwater Monitoring using DWLR Data</h1>
+                    <div class="absolute right-0 top-0 flex items-center gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20 shadow-inner">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute"></span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 relative"></span>
+                        Live API Active
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="top-section">
+                        <div class="location-header" onclick="toggleLocationInputs()">
+                            <span class="location-title">LOCATION SELECTOR</span>
+                            <span id="location-arrow">›</span>
+                        </div>
+                        <div class="current-region-pill">
+                            <span class="region-icon">📍</span>
+                            <span class="region-text">
+                                <strong>Current Region:</strong> <span id="header-location-path">All India</span>
+                            </span>
                         </div>
                     </div>
+                </div>
+
+                <!-- INPUT SECTION -->
+                <div id="location-inputs" class="location-inputs">
+                    <div class="filter-bar">
+                    <div class="mode-toggle text-slate-300">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="mode" value="manual" checked> Manual
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="mode" value="pincode"> By Pincode
+                        </label>
+                    </div>
+
+                    <div id="manual-selectors" class="flex gap-3 w-full flex-wrap">
+                        <select id="stateSelect">
+                            <option value="" disabled selected>Loading states...</option>
+                        </select>
+                        <select id="districtSelect" disabled>
+                            <option value="" disabled selected>Select State First</option>
+                        </select>
+                        <select id="blockSelect" disabled>
+                            <option value="" disabled selected>Select District First</option>
+                        </select>
+                        <select id="villageSelect" disabled>
+                            <option value="" disabled selected>Select Block First</option>
+                        </select>
+                    </div>
+
+                    <div id="pincode-selectors" class="hidden flex gap-3 w-full flex-wrap items-center">
+                        <input type="text" id="pincodeInput" placeholder="Enter Pincode" maxlength="6" />
+                        <button id="pincodeSearchBtn" class="bg-blue-600 hover:bg-blue-500 text-white rounded-lg px-4 py-2 transition-all duration-300 shadow-lg shadow-blue-500/20">Search</button>
+                        <div id="pincode-loading" class="text-blue-400 text-sm hidden">Searching...</div>
+                        <div id="pincode-error" class="text-rose-400 text-sm hidden">Not found or invalid.</div>
+                    </div>
+                </div>
+                </div>
+                <div id="home-tab" class="tab-pane active">
+                    <h2 class="page-title">Overview Dashboard</h2>
+                    <p class="page-subtitle">Key Performance Indicators for the selected region.</p>
 
                     <div id="home-loading" class="loading-container hidden">
                         <div class="spinner"></div><p>Fetching KPIs...</p>
@@ -159,53 +409,54 @@
                     </div>
 
                     <!-- Primary KPIs -->
-                    <h3 class="subsection-title">Groundwater Metrics</h3>
-                    <div id="home-content" class="dashboard-grid">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Groundwater Metrics</h3>
+                    <div id="home-content" class="dashboard-grid mb-12">
                         <div class="kpi-card blue">
-                            <div class="kpi-data">
-                                <h3>Overall DTWL</h3>
-                                <p class="kpi-value" id="kpi-overall-dtwl">--</p>
-                                <p class="kpi-subtitle">Meters</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Average DTWL</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-4xl font-bold text-white leading-none" id="kpi-overall-dtwl">--</span>
+                                <span class="text-sm text-slate-400 pb-1">Meters</span>
                             </div>
                         </div>
                         <div class="kpi-card blue">
-                            <div class="kpi-data">
-                                <h3>Current DTWL</h3>
-                                <p class="kpi-value" id="kpi-current-dtwl">--</p>
-                                <p class="kpi-subtitle" id="kpi-current-date">--</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Current DTWL</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-4xl font-bold text-white leading-none" id="kpi-current-dtwl">--</span>
+                                <span class="text-sm text-slate-400 pb-1">m</span>
+                            </div>
+                            <div class="text-[12px] text-slate-400 mt-1" id="kpi-current-date">--</div>
+                        </div>
+                        <div class="kpi-card emerald">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Premonsoon Avg</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-4xl font-bold text-white leading-none" id="kpi-premonsoon">--</span>
+                                <span class="text-sm text-slate-400 pb-1">Meters</span>
                             </div>
                         </div>
                         <div class="kpi-card emerald">
-                            <div class="kpi-data">
-                                <h3>Premonsoon Avg</h3>
-                                <p class="kpi-value" id="kpi-premonsoon">--</p>
-                                <p class="kpi-subtitle">Meters</p>
-                            </div>
-                        </div>
-                        <div class="kpi-card emerald">
-                            <div class="kpi-data">
-                                <h3>Postmonsoon Avg</h3>
-                                <p class="kpi-value" id="kpi-postmonsoon">--</p>
-                                <p class="kpi-subtitle">Meters</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Postmonsoon Avg</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-4xl font-bold text-white leading-none" id="kpi-postmonsoon">--</span>
+                                <span class="text-sm text-slate-400 pb-1">Meters</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Secondary Context -->
-                    <h3 class="subsection-title mt-8">Environmental Context</h3>
-                    <div class="dashboard-grid context-grid">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Environmental Context</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="kpi-card orange">
-                            <div class="kpi-data">
-                                <h3>Temperature</h3>
-                                <p class="kpi-value" id="kpi-temp">--</p>
-                                <p class="kpi-subtitle">°C (Live)</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Temperature</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-4xl font-bold text-white leading-none" id="kpi-temp">--</span>
+                                <span class="text-sm text-slate-400 pb-1">°C (Live)</span>
                             </div>
                         </div>
                         <div class="kpi-card purple">
-                            <div class="kpi-data">
-                                <h3>Humidity</h3>
-                                <p class="kpi-value" id="kpi-humidity">--</p>
-                                <p class="kpi-subtitle">% (Live)</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Humidity</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-4xl font-bold text-white leading-none" id="kpi-humidity">--</span>
+                                <span class="text-sm text-slate-400 pb-1">% (Live)</span>
                             </div>
                         </div>
                     </div>
@@ -213,8 +464,8 @@
 
                 <!-- Analysis Tab -->
                 <div id="analysis-tab" class="tab-pane">
-                    <h2 class="section-title">Detailed Analysis</h2>
-                    <p class="section-desc">Historical Depth to Water Level trends.</p>
+                    <h2 class="page-title">Detailed Analysis</h2>
+                    <p class="page-subtitle">Historical Depth to Water Level trends.</p>
                     
                     <div id="analysis-loading" class="loading-container hidden">
                         <div class="spinner"></div><p>Loading trends...</p>
@@ -223,23 +474,26 @@
                         <p class="error-msg">Failed to load trend data.</p>
                     </div>
 
-                    <div class="chart-grid">
-                        <div class="chart-card" style="height: 350px;">
-                            <canvas id="overallChart"></canvas>
+                    <div class="flex flex-col gap-6">
+                        <div class="chart-card w-full">
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Overall Groundwater Level Trend</h3>
+                            <div class="h-[300px]"><canvas id="overallChart"></canvas></div>
                         </div>
-                        <div class="chart-card" style="height: 350px;">
-                            <canvas id="preChart"></canvas>
+                        <div class="chart-card w-full">
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Premonsoon Groundwater Trend</h3>
+                            <div class="h-[300px]"><canvas id="preChart"></canvas></div>
                         </div>
-                        <div class="chart-card" style="height: 350px;">
-                            <canvas id="postChart"></canvas>
+                        <div class="chart-card w-full">
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Postmonsoon Groundwater Trend</h3>
+                            <div class="h-[300px]"><canvas id="postChart"></canvas></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Rainfall Tab -->
                 <div id="rainfall-tab" class="tab-pane">
-                    <h2 class="section-title">Rainfall Correlation</h2>
-                    <p class="section-desc">Comparing rainfall data with groundwater levels.</p>
+                    <h2 class="page-title">Rainfall Correlation</h2>
+                    <p class="page-subtitle">Comparing rainfall data with groundwater levels.</p>
 
                     <div id="rainfall-loading" class="loading-container hidden">
                         <div class="spinner"></div><p>Loading correlation data...</p>
@@ -248,44 +502,45 @@
                         <p class="error-msg">Failed to load correlation data.</p>
                     </div>
 
-                    <div class="dashboard-grid mb-6">
+                    <div class="dashboard-grid mb-8">
                         <div class="kpi-card blue">
-                            <div class="kpi-data">
-                                <h3>Highest Annual Rainfall</h3>
-                                <p class="kpi-value" id="rain-high">--</p>
-                                <p class="kpi-subtitle">mm</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Highest Annual Rainfall</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-3xl font-bold text-white leading-none" id="rain-high">--</span>
+                                <span class="text-sm text-slate-400 pb-1">mm</span>
                             </div>
                         </div>
                         <div class="kpi-card purple">
-                            <div class="kpi-data">
-                                <h3>Lowest Annual Rainfall</h3>
-                                <p class="kpi-value" id="rain-low">--</p>
-                                <p class="kpi-subtitle">mm</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Lowest Annual Rainfall</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-3xl font-bold text-white leading-none" id="rain-low">--</span>
+                                <span class="text-sm text-slate-400 pb-1">mm</span>
                             </div>
                         </div>
                         <div class="kpi-card emerald">
-                            <div class="kpi-data">
-                                <h3>Average Rainfall</h3>
-                                <p class="kpi-value" id="rain-avg">--</p>
-                                <p class="kpi-subtitle">mm/year</p>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Average Rainfall</h3>
+                            <div class="flex items-end gap-2 mt-2">
+                                <span class="text-3xl font-bold text-white leading-none" id="rain-avg">--</span>
+                                <span class="text-sm text-slate-400 pb-1">mm/yr</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="chart-card">
-                        <canvas id="rainfallChart"></canvas>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Rainfall vs Groundwater Depth</h3>
+                        <div class="h-[400px] w-full"><canvas id="rainfallChart"></canvas></div>
                     </div>
                 </div>
 
                 <!-- Map Tab -->
                 <div id="map-tab" class="tab-pane">
-                    <h2 class="section-title">Sensor Map View</h2>
-                    <p class="section-desc">Geographical distribution of monitoring points. Colors indicate DTWL severity.</p>
+                    <h2 class="page-title">Sensor Map View</h2>
+                    <p class="page-subtitle">Geographical distribution of monitoring points. Colors indicate DTWL severity.</p>
                     
                     <div id="map-loading" class="loading-container hidden">
                         <div class="spinner"></div><p>Loading map points...</p>
                     </div>
-                    <div class="map-card">
+                    <div class="chart-card overflow-hidden p-2">
                         <div id="map" style="height: 600px; width: 100%; border-radius: 12px; z-index: 1;"></div>
                         <div class="map-legend">
                             <span class="legend-item"><span class="color-box" style="background: #3b82f6;"></span> Shallow (< 5m)</span>
@@ -297,48 +552,58 @@
 
                 <!-- Crop Tab -->
                 <div id="crop-tab" class="tab-pane">
-                    <h2 class="section-title">AI Crop Recommendation System</h2>
-                    <p class="section-desc">Get AI-generated optimal crops based on state, DTWL, rainfall, and temperature.</p>
+                    <h2 class="page-title">AI Crop Recommendation System</h2>
+                    <p class="page-subtitle">Get AI-generated optimal crops based on state, DTWL, rainfall, and temperature.</p>
                     
-                    <div class="crop-container">
-                        <div class="crop-input-card">
-                            <h3>Parameters</h3>
-                            <div class="form-group">
-                                <label for="cropTempInput">Temperature (°C)</label>
-                                <input type="number" id="cropTempInput" placeholder="e.g. 25" class="custom-input">
+                    <div class="crop-container flex flex-col gap-8">
+                        <div class="panel-card p-8">
+                            <h3 class="text-lg font-bold text-white mb-6">Parameters</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div>
+                                    <label for="cropTempInput" class="block text-sm font-medium text-slate-400 mb-2">Temperature (°C)</label>
+                                    <input type="number" id="cropTempInput" placeholder="e.g. 25" class="custom-input">
+                                </div>
+                                <div>
+                                    <label for="cropRainInput" class="block text-sm font-medium text-slate-400 mb-2">Rainfall (mm)</label>
+                                    <input type="number" id="cropRainInput" placeholder="e.g. 800" class="custom-input">
+                                </div>
+                                <div>
+                                    <label for="cropDtwlInput" class="block text-sm font-medium text-slate-400 mb-2">DTWL (m)</label>
+                                    <input type="number" step="0.1" id="cropDtwlInput" placeholder="e.g. 5.5" class="custom-input">
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="cropRainInput">Rainfall (mm)</label>
-                                <input type="number" id="cropRainInput" placeholder="e.g. 800" class="custom-input">
+                            <div class="mt-6 flex justify-end">
+                                <button id="run-crop-btn" class="primary-btn">Generate Recommendation</button>
                             </div>
-                            <div class="form-group">
-                                <label for="cropDtwlInput">DTWL (m)</label>
-                                <input type="number" step="0.1" id="cropDtwlInput" placeholder="e.g. 5.5" class="custom-input">
-                            </div>
-                            <button id="run-crop-btn" class="primary-btn">Generate Recommendation</button>
                         </div>
 
-                        <div class="crop-results-card">
-                            <div id="crop-loading" class="loading-container hidden">
+                        <div id="crop-results" class="results-container flex flex-col gap-6 w-full">
+                            <div id="crop-loading" class="loading-container hidden panel-card p-8">
                                 <div class="spinner"></div><p>AI is analyzing...</p>
                             </div>
                             
-                            <div id="crop-error" class="error-container hidden">
+                            <div id="crop-error" class="error-container hidden panel-card p-8">
                                 <p class="error-msg">Failed to get recommendations.</p>
                             </div>
 
-                            <div id="crop-content" class="hidden">
-                                <div class="recommended-crops">
-                                    <h4>AI Recommended Crops</h4>
-                                    <ul id="crop-list-val" class="crop-list" style="margin-bottom: 12px; font-weight: 500; font-size: 1.1rem; color: #fff;"></ul>
-                                    <h4 style="margin-top: 16px;">AI Reasoning</h4>
-                                    <p id="crop-reason-val" style="color: var(--text-muted); font-size: 0.95rem;"></p>
-                                </div>
-                            </div>
-                            
-                            <div id="crop-empty" class="empty-state">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <div id="crop-empty" class="flex flex-col items-center justify-center flex-1 text-slate-500 py-12 panel-card p-8">
+                                <span class="text-5xl mb-4 opacity-70">🌱</span>
                                 <p>Enter parameters to view AI recommendations.</p>
+                            </div>
+
+                            <div id="crop-content" class="hidden flex-col gap-4 w-full" style="animation: fadeIn 0.4s ease-out forwards;">
+                                <div class="result-card suitable">
+                                    <h4 class="text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></span> Suitable Crops</h4>
+                                    <div id="crop-suitable-list"></div>
+                                </div>
+                                <div class="result-card moderate">
+                                    <h4 class="text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-yellow-500 shadow-sm"></span> Moderate Crops</h4>
+                                    <div id="crop-moderate-list"></div>
+                                </div>
+                                <div class="result-card not-recommended">
+                                    <h4 class="text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-500 shadow-sm"></span> Not Recommended</h4>
+                                    <div id="crop-not-recommended-list"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -346,48 +611,50 @@
 
                 <!-- Advanced Tab -->
                 <div id="advanced-tab" class="tab-pane">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div>
-                            <h2 class="section-title">Decision-Support System</h2>
-                            <p class="section-desc">Intelligent analytics, prediction, and reporting.</p>
-                        </div>
-                        <button id="btn-download-report" class="primary-btn" style="width: auto;">Download Report</button>
+                    <h2 class="page-title">Decision-Support System</h2>
+                    <p class="page-subtitle">Intelligent analytics, prediction, and reporting.</p>
+                    
+                    <div class="flex justify-end mb-6">
+                        <button id="btn-download-report" class="primary-btn !w-auto">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Download Report
+                        </button>
                     </div>
                     
-                    <div class="advanced-dashboard">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Left Column -->
-                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                        <div class="flex flex-col gap-6 lg:col-span-1">
                             <div class="kpi-card emerald" id="healthCard">
-                                <h3>Groundwater Health Card</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Indicates overall condition of groundwater in this region.</p>
-                                <div style="display: flex; justify-content: space-between; margin-top: 16px;">
-                                    <div><span style="font-size: 2rem; font-weight: bold;" id="health-score">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Health Score</span></div>
-                                    <div style="text-align: right;"><span style="font-size: 1.2rem;" id="health-trend">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Trend</span></div>
+                                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Groundwater Health Card</h3>
+                                <p class="text-xs text-slate-500 mb-4">Indicates overall condition of groundwater in this region.</p>
+                                <div class="flex justify-between items-end mt-4">
+                                    <div><span class="text-4xl font-bold text-white" id="health-score">--</span><br><span class="text-xs text-slate-400 mt-1 block">Health Score</span></div>
+                                    <div class="text-right"><span class="text-xl font-medium text-emerald-400" id="health-trend">--</span><br><span class="text-xs text-slate-400 mt-1 block">Trend</span></div>
                                 </div>
-                                <div id="health-explanation" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;"></div>
+                                <div id="health-explanation" class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-700/50 pt-3"></div>
                             </div>
                             
                             <div class="kpi-card blue" id="autonomyCard">
-                                <h3>Days of Autonomy</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Estimates how long groundwater can sustain without recharge.</p>
-                                <div style="display: flex; justify-content: space-between; margin-top: 16px;">
-                                    <div><span style="font-size: 2rem; font-weight: bold;" id="autonomy-days">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Days</span></div>
-                                    <div style="text-align: right;"><span style="font-size: 1.2rem; color: var(--accent);" id="autonomy-status">--</span><br><span style="font-size: 0.85rem; color: var(--text-muted);">Status</span></div>
+                                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Days of Autonomy</h3>
+                                <p class="text-xs text-slate-500 mb-4">Estimates how long groundwater can sustain without recharge.</p>
+                                <div class="flex justify-between items-end mt-4">
+                                    <div><span class="text-4xl font-bold text-white" id="autonomy-days">--</span><br><span class="text-xs text-slate-400 mt-1 block">Estimated Duration</span></div>
+                                    <div class="text-right"><span class="text-xl font-medium text-blue-400" id="autonomy-status">--</span><br><span class="text-xs text-slate-400 mt-1 block">Status</span></div>
                                 </div>
-                                <div id="autonomy-explanation" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;"></div>
+                                <div id="autonomy-explanation" class="mt-4 text-sm text-slate-400 leading-relaxed border-t border-slate-700/50 pt-3"></div>
                             </div>
                         </div>
 
                         <!-- Right Column -->
-                        <div style="display: flex; flex-direction: column; gap: 24px;">
-                            <div class="chart-card" style="height: 330px; padding: 16px;">
-                                <h3 style="margin-bottom: 4px; font-size: 1rem; color: var(--text-muted);">Aquifer Recharge Efficiency</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Explanation: This shows how well groundwater is refilled after rainfall. Higher values mean better recharge.</p>
-                                <div style="height: 230px;"><canvas id="efficiencyChart"></canvas></div>
+                        <div class="flex flex-col gap-6 lg:col-span-2">
+                            <div class="chart-card">
+                                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Aquifer Recharge Efficiency</h3>
+                                <p class="text-xs text-slate-500 mb-4">Explanation: This shows how well groundwater is refilled after rainfall. Higher values mean better recharge.</p>
+                                <div class="h-[250px] w-full"><canvas id="efficiencyChart"></canvas></div>
                             </div>
-                            <div class="chart-card" style="height: 300px; padding: 16px;">
-                                <h3 style="margin-bottom: 8px; font-size: 1rem; color: var(--text-muted);">DTWL Forecast (5-Year)</h3>
-                                <div style="height: 230px;"><canvas id="forecastChart"></canvas></div>
+                            <div class="chart-card">
+                                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">DTWL Forecast (5-Year)</h3>
+                                <div class="h-[250px] w-full"><canvas id="forecastChart"></canvas></div>
                             </div>
                         </div>
                     </div>
@@ -395,22 +662,21 @@
 
                 <!-- Alerts & Insights Tab -->
                 <div id="alerts-tab" class="tab-pane">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div>
-                            <h2 class="section-title">Smart Alerts & Insights</h2>
-                            <p class="section-desc">Actionable insights and alerts based on current groundwater data.</p>
-                        </div>
-                    </div>
+                    <h2 class="page-title">Smart Alerts & Insights</h2>
+                    <p class="page-subtitle">Actionable insights and alerts based on current groundwater data.</p>
                     
-                    <div style="display: flex; flex-direction: column; gap: 24px;">
-                        <div class="kpi-card" style="border-left: 4px solid var(--accent); background: rgba(30, 41, 59, 0.4);">
-                            <h3 style="color: var(--accent); margin-bottom: 12px; font-size: 1.2rem;">Insights Summary</h3>
-                            <p id="insightsText" style="font-size: 1rem; color: var(--text-muted); line-height: 1.6;">Groundwater levels in this region are moderately stable but show a declining trend. Recharge after rainfall is limited, so careful water usage is recommended.</p>
+                    <div class="flex flex-col gap-6">
+                        <div class="kpi-card border-l-4 border-l-teal-500 bg-slate-800/40">
+                            <h3 class="text-teal-400 font-bold text-lg mb-3 flex items-center gap-2">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                                Insights Summary
+                            </h3>
+                            <p id="insightsText" class="text-slate-300 text-base leading-relaxed">Groundwater levels in this region are moderately stable but show a declining trend. Recharge after rainfall is limited, so careful water usage is recommended.</p>
                         </div>
 
                         <div>
-                            <h3 style="margin-bottom: 16px; font-size: 1.2rem; color: #f8fafc;">Active Alerts</h3>
-                            <div id="alertsList" style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                            <h3 class="text-slate-200 font-bold text-lg mb-4">Active Alerts</h3>
+                            <div id="alertsList" class="grid grid-cols-1 gap-4">
                                 <!-- Alerts will be injected here -->
                             </div>
                         </div>
