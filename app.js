@@ -8,9 +8,9 @@ const getHeaders = () => ({
 // DOM Elements
 const navBtns = document.querySelectorAll('.nav-btn');
 const tabPanes = document.querySelectorAll('.tab-pane');
-const locModeRadios = document.querySelectorAll('input[name="locMode"]');
-const pincodePanel = document.getElementById('pincode-panel');
-const manualPanel = document.getElementById('manual-panel');
+const modeRadios = document.querySelectorAll('input[name="mode"]');
+const manualSelectors = document.getElementById('manual-selectors');
+const pincodeSelectors = document.getElementById('pincode-selectors');
 const headerLocPath = document.getElementById('header-location-path');
 
 const stateSelect = document.getElementById('stateSelect');
@@ -80,11 +80,15 @@ function setupNavigation() {
         downloadBtn.addEventListener('click', () => {
             const temp = document.getElementById('kpi-temp') ? document.getElementById('kpi-temp').textContent : '--';
             const hum = document.getElementById('kpi-humidity') ? document.getElementById('kpi-humidity').textContent : '--';
+            const rain = document.getElementById('rain-avg') ? document.getElementById('rain-avg').textContent : '--';
+            const currentDtwl = document.getElementById('kpi-current-dtwl') ? document.getElementById('kpi-current-dtwl').textContent : '--';
+            const avgDtwl = document.getElementById('kpi-overall-dtwl') ? document.getElementById('kpi-overall-dtwl').textContent : '--';
+            
             let qs = `state=${encodeURIComponent(locationState.state || 'All India')}`;
             if (locationState.district) qs += `&district=${encodeURIComponent(locationState.district)}`;
             if (locationState.block) qs += `&block=${encodeURIComponent(locationState.block)}`;
             if (locationState.village) qs += `&village=${encodeURIComponent(locationState.village)}`;
-            qs += `&temp=${encodeURIComponent(temp)}&humidity=${encodeURIComponent(hum)}`;
+            qs += `&temp=${encodeURIComponent(temp)}&humidity=${encodeURIComponent(hum)}&rainfall=${encodeURIComponent(rain)}&dtwl=${encodeURIComponent(currentDtwl)}&avg_dtwl=${encodeURIComponent(avgDtwl)}`;
             const url = `${API_BASE}/api/report?${qs}`;
             window.open(url, '_blank');
         });
@@ -92,22 +96,28 @@ function setupNavigation() {
 }
 
 function setupLocationSelectors() {
-    locModeRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (e.target.value === 'pincode') {
-                pincodePanel.classList.remove('hidden');
-                manualPanel.classList.add('hidden');
-            } else {
-                pincodePanel.classList.add('hidden');
-                manualPanel.classList.remove('hidden');
-            }
+    if (modeRadios.length) {
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'pincode') {
+                    pincodeSelectors.classList.remove('hidden');
+                    manualSelectors.classList.add('hidden');
+                } else {
+                    pincodeSelectors.classList.add('hidden');
+                    manualSelectors.classList.remove('hidden');
+                }
+            });
         });
-    });
+    }
 
-    document.getElementById('pincodeSearchBtn').addEventListener('click', handlePincodeSearch);
-    document.getElementById('pincodeInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handlePincodeSearch();
-    });
+    const searchBtn = document.getElementById('pincodeSearchBtn');
+    const pinInput = document.getElementById('pincodeInput');
+    if (searchBtn) searchBtn.addEventListener('click', handlePincodeSearch);
+    if (pinInput) {
+        pinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handlePincodeSearch();
+        });
+    }
 
     stateSelect.addEventListener('change', async (e) => {
         locationState.state = e.target.value;
@@ -357,12 +367,21 @@ async function loadHomeData() {
 
         const overall = data.overall_dtwl != null ? data.overall_dtwl : '--';
         const current = data.current_dtwl != null ? data.current_dtwl : '--';
+        const currentDate = data.current_date;
         const pre = data.premonsoon != null ? data.premonsoon : '--';
         const post = data.postmonsoon != null ? data.postmonsoon : '--';
 
         document.getElementById('kpi-overall-dtwl').textContent = overall;
         document.getElementById('kpi-current-dtwl').textContent = current;
-        document.getElementById('kpi-current-date').textContent = "Latest Data";
+        
+        const dateEl = document.getElementById('kpi-current-date');
+        if (currentDate && currentDate !== '--') {
+            dateEl.textContent = `(as of ${currentDate})`;
+            dateEl.style.display = 'block';
+        } else {
+            dateEl.style.display = 'none';
+        }
+
         document.getElementById('kpi-premonsoon').textContent = pre;
         document.getElementById('kpi-postmonsoon').textContent = post;
 
@@ -729,12 +748,14 @@ async function loadCropData() {
         return;
     }
 
-    const tempInput = document.getElementById('cropTempInput').value;
-    const rainInput = document.getElementById('cropRainInput').value;
-    const dtwlInput = document.getElementById('cropDtwlInput').value;
+    const tempInput = document.getElementById('cropTempInput').value || document.getElementById('kpi-temp').textContent;
+    const rainInput = document.getElementById('cropRainInput').value || document.getElementById('rain-avg').textContent;
+    const dtwlInput = document.getElementById('cropDtwlInput').value || document.getElementById('kpi-current-dtwl').textContent;
+    const avgDtwl = document.getElementById('kpi-overall-dtwl').textContent;
+    const humidity = document.getElementById('kpi-humidity').textContent;
 
-    if (!tempInput || !rainInput || !dtwlInput) {
-        alert("Please ensure Temperature, Rainfall, and DTWL are filled.");
+    if (!tempInput || !rainInput || !dtwlInput || tempInput === '--' || rainInput === '--') {
+        alert("Please ensure Temperature, Rainfall, and DTWL data is available.");
         return;
     }
 
@@ -749,37 +770,51 @@ async function loadCropData() {
     error.classList.add('hidden');
 
     try {
-        const url = `${API_BASE}/ai-crop?state=${encodeURIComponent(locationState.state)}&temp=${encodeURIComponent(tempInput)}&rainfall=${encodeURIComponent(rainInput)}&dtwl=${encodeURIComponent(dtwlInput)}`;
+        let url = `${API_BASE}/ai-crop?state=${encodeURIComponent(locationState.state)}`;
+        if (locationState.district) url += `&district=${encodeURIComponent(locationState.district)}`;
+        if (locationState.block) url += `&block=${encodeURIComponent(locationState.block)}`;
+        if (locationState.village) url += `&village=${encodeURIComponent(locationState.village)}`;
+        
+        url += `&dtwl=${encodeURIComponent(dtwlInput)}&avg_dtwl=${encodeURIComponent(avgDtwl)}`;
+        url += `&temp=${encodeURIComponent(tempInput)}&humidity=${encodeURIComponent(humidity)}&rainfall=${encodeURIComponent(rainInput)}`;
+        
         const response = await fetch(url, { headers: getHeaders() });
         const data = await response.json();
+        
+        if (data.message) {
+            throw new Error(data.message);
+        }
 
-        const listEl = document.getElementById('crop-list-val');
-        listEl.innerHTML = '';
+        const suitable = data.suitable || [];
+        const moderate = data.moderate || [];
+        const notRecommended = data.not_recommended || [];
 
-        const validCrops = (data.crops && data.crops.length > 0) ? data.crops : ["Pulses", "Vegetables"];
+        const renderSection = (id, items) => {
+            const container = document.getElementById(id);
+            container.innerHTML = '';
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p class="text-sm opacity-80 italic">No suitable crops found for current conditions</p>';
+                return;
+            }
+            items.forEach(item => {
+                container.innerHTML += `
+                    <div class="crop-item">
+                        <span class="font-bold block">${item.crop}</span>
+                        <span class="text-xs opacity-90 block mt-1">• ${item.reason}</span>
+                    </div>
+                `;
+            });
+        };
 
-        validCrops.forEach(crop => {
-            const li = document.createElement('li');
-            li.textContent = crop;
-            li.style.display = 'inline-block';
-            li.style.background = 'rgba(59, 130, 246, 0.2)';
-            li.style.padding = '4px 12px';
-            li.style.borderRadius = '20px';
-            li.style.marginRight = '8px';
-            li.style.border = '1px solid #3b82f6';
-            listEl.appendChild(li);
-        });
-
-        document.getElementById('crop-reason-val').textContent = data.reason || "AI analyzed successfully.";
+        renderSection('crop-suitable-list', suitable);
+        renderSection('crop-moderate-list', moderate);
+        renderSection('crop-not-recommended-list', notRecommended);
 
         content.classList.remove('hidden');
+        content.classList.add('flex');
     } catch (err) {
         console.warn("AI Crop Model warning:", err);
-        // Fallback UI rendering
-        const listEl = document.getElementById('crop-list-val');
-        listEl.innerHTML = '<li style="display:inline-block;background:rgba(59,130,246,0.2);padding:4px 12px;border-radius:20px;margin-right:8px;border:1px solid #3b82f6;">Pulses</li><li style="display:inline-block;background:rgba(59,130,246,0.2);padding:4px 12px;border-radius:20px;margin-right:8px;border:1px solid #3b82f6;">Vegetables</li>';
-        document.getElementById('crop-reason-val').textContent = "Fallback recommendation triggered due to network.";
-        content.classList.remove('hidden');
+        error.classList.remove('hidden');
     } finally {
         loading.classList.add('hidden');
     }
@@ -811,7 +846,8 @@ async function loadAdvancedData() {
         }).catch(e => console.warn(e));
 
         fetch(`${API_BASE}/api/autonomy${baseQs}`).then(r => r.json()).then(data => {
-            document.getElementById('autonomy-days').textContent = data.days != null ? data.days : '--';
+            const daysVal = data.days_of_autonomy;
+            document.getElementById('autonomy-days').textContent = daysVal != null && daysVal !== '--' ? daysVal + ' Days' : '--';
             document.getElementById('autonomy-status').textContent = data.status || '--';
             const card = document.getElementById('autonomyCard');
             if (card) card.className = `kpi-card ${data.status === 'Safe' ? 'emerald' : data.status === 'Warning' ? 'orange' : 'rose'}`;
@@ -819,9 +855,15 @@ async function loadAdvancedData() {
             const expl = document.getElementById('autonomy-explanation');
             if (expl) {
                 let txt = "Explanation:<br>";
-                if (data.days < 30) txt += "If no rain occurs, the available groundwater can support usage for approximately " + data.days + " days before reaching critical levels. <strong>Water may run out very soon.</strong>";
-                else if (data.days <= 90) txt += "If no rain occurs, the available groundwater can support usage for approximately " + data.days + " days. <strong>Water is available but needs careful usage.</strong>";
-                else txt += "If no rain occurs, the available groundwater can support usage for approximately " + data.days + " days. <strong>Water availability is stable.</strong>";
+                if (daysVal === '--') {
+                    txt += "Not enough data to calculate autonomy.";
+                } else if (daysVal < 30) {
+                    txt += "If no rain occurs, the available groundwater can support usage for approximately " + daysVal + " days before reaching critical levels. <strong>Water may run out very soon.</strong>";
+                } else if (daysVal <= 90) {
+                    txt += "If no rain occurs, the available groundwater can support usage for approximately " + daysVal + " days. <strong>Water is available but needs careful usage.</strong>";
+                } else {
+                    txt += "If no rain occurs, the available groundwater can support usage for approximately " + daysVal + " days. <strong>Water availability is stable.</strong>";
+                }
                 expl.innerHTML = txt;
             }
         }).catch(e => console.warn(e));
@@ -944,3 +986,18 @@ function renderForecastChart(dataList) {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+window.toggleLocationInputs = function() {
+    const section = document.getElementById("location-inputs");
+    const arrow = document.getElementById("location-arrow");
+
+    if (!section || !arrow) return;
+
+    if (section.style.display === "none" || section.style.display === "") {
+        section.style.display = "block";
+        arrow.innerHTML = "⌄";
+    } else {
+        section.style.display = "none";
+        arrow.innerHTML = "›";
+    }
+};
